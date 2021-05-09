@@ -10,19 +10,67 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+
+  const user = users.find((user) => user.username === username);
+
+  if (!user) {
+    return response.status(404).json({ error: 'user not found!' });
+  }
+
+  request.user = user;
+
+  next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const { user } = request;
+
+  if (!user.pro && user.todos.length >= 10) {
+    return response.status(403).json({ error: 'limit todos excedid' })
+  }
+  next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  isUUID = validate(id, 4);
+  //console.log('validate ', id);
+  if (!isUUID) {
+    return response.status(400).json({ done: true, error: 'id is not UUID' });
+  }
+  //console.log('id: ', id);
+  const user = users.find((user) => user.username === username);
+  if (!user) {
+    return response.status(404).json({ error: 'user not found!' });
+  }
+
+  const todo = user.todos.find((todo) => todo.id === id);
+
+  if (!todo) {
+    return response.status(404).json({ error: 'User or Todo not found' });
+  }
+
+  request.todo = todo;
+  request.user = user;
+
+  next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find((user) => user.id === id);
+
+  if (!user) {
+    return response.status(404).json({ error: 'user not found!' });
+  }
+
+  request.user = user;
+
+  next();
 }
 
 app.post('/users', (request, response) => {
@@ -43,13 +91,16 @@ app.post('/users', (request, response) => {
   };
 
   users.push(user);
-
+ // console.log(user);
+ // console.log(users);
   return response.status(201).json(user);
 });
 
 app.get('/users/:id', findUserById, (request, response) => {
   const { user } = request;
-
+ // const { id } = request.params;
+ // console.log(user);
+  //console.log(id);
   return response.json(user);
 });
 
